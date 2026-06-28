@@ -1,1 +1,82 @@
+import pandas as pd
+import matplotlib.pyplot as plt
 
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+dataset_url = "https://raw.githubusercontent.com/marwa9975/CODSOFT_DS02_Movie-Rating-Prediction-with-Python/main/IMDb%20Movies%20India.csv"
+
+movie_data = pd.read_csv(dataset_url, encoding="latin1")
+
+movie_data = movie_data[["Genre", "Director", "Actor 1", "Actor 2", "Actor 3", "Rating"]]
+
+movie_data = movie_data.dropna()
+
+encoder = LabelEncoder()
+
+movie_data["Genre"] = encoder.fit_transform(movie_data["Genre"])
+movie_data["Director"] = encoder.fit_transform(movie_data["Director"])
+movie_data["Actor 1"] = encoder.fit_transform(movie_data["Actor 1"])
+movie_data["Actor 2"] = encoder.fit_transform(movie_data["Actor 2"])
+movie_data["Actor 3"] = encoder.fit_transform(movie_data["Actor 3"])
+
+print("First 5 Rows:")
+print(movie_data.head())
+
+print("\nDataset Shape:", movie_data.shape)
+
+X = movie_data[["Genre", "Director", "Actor 1", "Actor 2", "Actor 3"]]
+y = movie_data["Rating"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+model = RandomForestRegressor(random_state=42)
+
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+print("\nModel Performance")
+print("MAE:", mean_absolute_error(y_test, y_pred))
+print("MSE:", mean_squared_error(y_test, y_pred))
+print("R2 Score:", r2_score(y_test, y_pred))
+
+genre_count = movie_data["Genre"].value_counts().head(5)
+
+plt.figure(figsize=(6,6))
+plt.pie(
+    genre_count,
+    labels=genre_count.index.astype(str),
+    autopct="%1.1f%%",
+    startangle=90
+)
+plt.title("Top 5 Movie Genres")
+plt.show()
+
+director_count = movie_data["Director"].value_counts().head(10)
+
+plt.figure(figsize=(8,4))
+plt.bar(director_count.index.astype(str), director_count.values)
+plt.xlabel("Director")
+plt.ylabel("Number of Movies")
+plt.title("Top 10 Directors")
+plt.xticks(rotation=90)
+plt.show()
+
+sample_movie = pd.DataFrame({
+    "Genre": [movie_data["Genre"].iloc[0]],
+    "Director": [movie_data["Director"].iloc[0]],
+    "Actor 1": [movie_data["Actor 1"].iloc[0]],
+    "Actor 2": [movie_data["Actor 2"].iloc[0]],
+    "Actor 3": [movie_data["Actor 3"].iloc[0]]
+})
+
+prediction = model.predict(sample_movie)
+
+print("\nPredicted Movie Rating:", prediction[0])
+
+print("\nMovie Rating Prediction Completed Successfully!")
